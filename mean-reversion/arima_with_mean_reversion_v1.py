@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import numpy as np
 import pandas as pd
 from datamodel import OrderDepth, TradingState, Order
@@ -266,7 +260,7 @@ class Trader:
                         best_ask = min(order_depth.sell_orders.keys())
                         best_ask_volume = order_depth.sell_orders[best_ask]
 
-                        if best_ask < 9999.750000 and np.abs(best_ask_volume) > 0:
+                        if best_ask <= 9999 and np.abs(best_ask_volume) > 0:
                             print("BUY", product, str(-best_ask_volume) + "x", best_ask)
                             orders.append(Order(product, best_ask, -best_ask_volume))
 
@@ -274,7 +268,7 @@ class Trader:
                         best_bid = max(order_depth.buy_orders.keys())
                         best_bid_volume = order_depth.buy_orders[best_bid]
                        
-                        if best_bid > 10000.000000 and best_bid_volume > 0:
+                        if best_bid >= 10001 and best_bid_volume > 0:
                             print("SELL", product, str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
 
@@ -327,10 +321,3 @@ class Trader:
                 result[product] = orders
 
         return result
-
-
-# In[ ]:
-
-
-
-
