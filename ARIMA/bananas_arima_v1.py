@@ -215,6 +215,9 @@ class ARIMA(LinearModel):
             y[x.shape[0] + i] = super().predict(feat[None, :])
         return self.return_output(y)
 
+"""
+Initialize ARIMA Object
+"""
 model = ARIMA(1,0,3)
 
 """
@@ -254,50 +257,23 @@ class Trader:
 
                 orders: list[Order] = []
 
-
                 if current_timestamp >= start_trading:                
-                    
-                    
-                    # If statement checks if there are any SELL orders in the PEARLS market
                     if len(order_depth.sell_orders) > 0:
 
-                        # Sort all the available sell orders by their price,
-                        # and select only the sell order with the lowest price
                         best_ask = min(order_depth.sell_orders.keys())
                         best_ask_volume = order_depth.sell_orders[best_ask]
-                        #if positioned == True:
-                        #    best_ask_volume = min(20-state.position[product], best_ask_volume)
-                        #else:
-                        #    best_ask_volume = min(20, best_ask_volume)
 
-                        # Check if the lowest ask (sell order) is lower than the above defined fair value
                         if best_ask+3 < forecasted_price and np.abs(best_ask_volume) > 0:
-
-                            # In case the lowest ask is lower than our fair value,
-                            # This presents an opportunity for us to buy cheaply
-                            # The code below therefore sends a BUY order at the price level of the ask,
-                            # with the same quantity
-                            # We expect this order to trade with the sell order
                             print("BUY", str(-best_ask_volume) + "x", best_ask)
                             orders.append(Order(product, best_ask, -best_ask_volume))
 
-                    # The below code block is similar to the one above,
-                    # the difference is that it finds the highest bid (buy order)
-                    # If the price of the order is higher than the fair value
-                    # This is an opportunity to sell at a premium
                     if len(order_depth.buy_orders) != 0:
                         best_bid = max(order_depth.buy_orders.keys())
                         best_bid_volume = order_depth.buy_orders[best_bid]
-                        
-                        #if positioned == True:
-                        #    best_bid_volume = min(np.abs(20+state.position[product]), best_ask_volume)
-                        #else:
-                        #    best_ask_volume = min(20, best_bid_volume)
-                        
+                       
                         if best_bid-3 > forecasted_price and best_bid_volume > 0:
                             print("SELL", str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
-                    
 
                 result[product] = orders
                 if result[product] != []:
