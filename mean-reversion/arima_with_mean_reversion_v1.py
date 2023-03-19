@@ -243,12 +243,12 @@ class Trader:
                 order_depth: OrderDepth = state.order_depths[product]
                 
                 price = 0
-                count = 0 
+                count = 0.000001
 
-                for Trade in state.market_trades[product]:
+                for Trade in state.market_trades.get(product, []):
                     price += Trade.price * Trade.quantity
                     count += Trade.quantity
-                current_avg_market_price = price / count
+                current_avg_market_price = int(price / count)
                 price_history_pearl = np.append(price_history_pearl, current_avg_market_price)
                 if len(price_history_pearl) == history_length+1:
                     price_history_pearl = price_history_pearl[1:]
@@ -285,12 +285,12 @@ class Trader:
                 order_depth: OrderDepth = state.order_depths[product]
                 
                 price = 0
-                count = 0 
+                count = 0.000001
 
-                for Trade in state.market_trades[product]:
+                for Trade in state.market_trades.get(product, []):
                     price += Trade.price * Trade.quantity
                     count += Trade.quantity
-                current_avg_market_price = price / count
+                current_avg_market_price = int(price / count)
                 price_history_banana = np.append(price_history_banana, current_avg_market_price)
                 if len(price_history_banana) == history_length+1:
                     price_history_banana = price_history_banana[1:]
