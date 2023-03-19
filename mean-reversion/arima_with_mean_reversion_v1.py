@@ -20,8 +20,9 @@ class Trader:
         
         
         def least_squares(x, y):
-            return np.linalg.inv((x.T @ x)) @ (x.T @ y)
-
+            if np.linalg.det(x.T @ x) != 0:
+                return np.linalg.inv((x.T @ x)) @ (x.T @ y)
+            return np.linalg.pinv((x.T @ x)) @ (x.T @ y) 
         """
         Autoregressor
         """
