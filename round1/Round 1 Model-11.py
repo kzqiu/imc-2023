@@ -271,14 +271,19 @@ class Trader:
                         best_ask_volume = current_position - position_limit
                         open_ask_volume = 0
                     else:
-                        open_ask_volume = max(current_position - position_spread - best_ask_volume, 0)
+                        open_ask_volume = current_position - position_spread - best_ask_volume
+                        
                         
                     if current_position - best_bid_volume < -position_limit:
                         best_bid_volume = current_position + position_limit
                         open_bid_volume = 0
                     else:
-                        open_bid_volume = max(current_position + position_spread - best_bid_volume, 0)
-
+                        open_bid_volume = current_position + position_spread - best_bid_volume
+                        
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0
                         
                     if best_ask == 9999 and -best_ask_volume > 0:
                         print("BUY", product, str(-best_ask_volume-open_ask_volume) + "x", 9999)
@@ -322,7 +327,7 @@ class Trader:
 
                 for Trade in state.market_trades.get(product, []):
                     price += Trade.price * Trade.quantity
-                    count += Trade.quantity  
+                    count += Trade.quantity
                 current_avg_market_price = price / count
                 
                 price_history_banana = np.append(price_history_banana, current_avg_market_price)
@@ -363,13 +368,18 @@ class Trader:
                         best_ask_volume = current_position - position_limit
                         open_ask_volume = 0
                     else:
-                        open_ask_volume = max(current_position - position_spread - best_ask_volume, 0)
+                        open_ask_volume = current_position - position_spread - best_ask_volume
                         
                     if current_position - best_bid_volume < -position_limit:
                         best_bid_volume = current_position + position_limit
                         open_bid_volume = 0
                     else:
-                        open_bid_volume = max(current_position + position_spread - best_bid_volume, 0)
+                        open_bid_volume = current_position + position_spread - best_bid_volume
+                        
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0  
                         
                     open_spread = 1.5 * spread
                     if best_ask == round(forecasted_price-open_spread) and -best_ask_volume > 0:
@@ -418,5 +428,4 @@ class Trader:
             profit -= self.holdings
             print("Profit: " + str(profit))
          
-
         return result
