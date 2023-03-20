@@ -339,7 +339,6 @@ class Trader:
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
                     forecasted_price = model.forecast(pred, 1)[-1]
-                    print(forecasted_price)
                     
                     if len(order_depth.sell_orders) > 0:
                         best_ask = min(order_depth.sell_orders.keys())
