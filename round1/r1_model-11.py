@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
-
-
 import numpy as np
 import pandas as pd
 from datamodel import OrderDepth, TradingState, Order
@@ -246,6 +240,7 @@ class Trader:
                     
                 start_trading = 0
                 position_limit = 20
+                position_spread = 20
                 current_position = state.position.get(product,0)
                 order_depth: OrderDepth = state.order_depths[product]
                 orders: list[Order] = []
@@ -272,13 +267,11 @@ class Trader:
                     else:
                         best_bid_volume = 0
                     
-                    position_spread = 15
                     if current_position - best_ask_volume > position_limit:
                         best_ask_volume = current_position - position_limit
                         open_ask_volume = 0
                     else:
                         open_ask_volume = current_position - position_spread - best_ask_volume
-                        
                         
                     if current_position - best_bid_volume < -position_limit:
                         best_bid_volume = current_position + position_limit
@@ -286,6 +279,10 @@ class Trader:
                     else:
                         open_bid_volume = current_position + position_spread - best_bid_volume
                         
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0
                         
                     if best_ask == 9999 and -best_ask_volume > 0:
                         print("BUY", product, str(-best_ask_volume-open_ask_volume) + "x", 9999)
@@ -316,7 +313,7 @@ class Trader:
                 
             if product == 'BANANAS':
 
-                start_trading = 300
+                start_trading = 2000
                 position_limit = 20
                 current_position = state.position.get(product,0)
                 history_length = 20
@@ -342,7 +339,7 @@ class Trader:
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
                     forecasted_price = model.forecast(pred, 1)[-1]
-
+                    
                     if len(order_depth.sell_orders) > 0:
                         best_ask = min(order_depth.sell_orders.keys())
                         
@@ -376,6 +373,11 @@ class Trader:
                         open_bid_volume = 0
                     else:
                         open_bid_volume = current_position + position_spread - best_bid_volume
+                        
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0  
                         
                     open_spread = 1.5 * spread
                     if best_ask == round(forecasted_price-open_spread) and -best_ask_volume > 0:
@@ -415,6 +417,8 @@ class Trader:
                             self.holdings += trade.price * trade.quantity
                         else:
                             self.holdings -= trade.price * trade.quantity
+
+                        
             self.last_trade = timestamp
             profit = 0
             for product in state.position:
@@ -422,6 +426,4 @@ class Trader:
             profit -= self.holdings
             print("Profit: " + str(profit))
          
-
         return result
-
