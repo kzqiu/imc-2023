@@ -360,15 +360,15 @@ class Trader:
                 spread = 4
                 spread_rate = 0
 
-                buySpread = spread / 2
-                sellSpread = spread / 2
+                buy_spread = spread / 2
+                sell_spread = spread / 2
 
                 if (current_position) < 0:
-                    buySpread = spread / 2 + current_position * spread_rate
-                    sellSpread = spread - buySpread
+                    buy_spread = spread / 2 + current_position * spread_rate
+                    sell_spread = spread - buy_spread
                 else:
-                    sellSpread = spread / 2 - current_position * spread_rate
-                    buySpread = spread - sellSpread
+                    sell_spread = spread / 2 - current_position * spread_rate
+                    buy_spread = spread - sell_spread
 
                 order_depth: OrderDepth = state.order_depths[product]
                 orders: list[Order] = []
@@ -392,12 +392,63 @@ class Trader:
                     price_history_banana = np.append(price_history_banana, current_avg_market_price)
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
-                    pred = price_history_banana
+
                     if len(pred) >= history_length+1:
                         pred = pred[1:]
 
                     forecasted_price = model.forecast(pred, 1)[-1]
-                    
+
+                    sell_orders = sorted([sell_ord for sell_ord in order_depth.sell_orders.items()], reverse=True)
+                    buy_orders = sorted([buy_ord for buy_ord in order_depth.buy_orders.items()], reverse=True)
+
+                    sell_pos = current_position
+                    buy_pos = current_position
+                    breakloop = False
+
+                    for order in sell_orders:
+                        if sell_pos == 20:
+                            break
+
+                        ask = order[0]
+                        vol = order[1]
+
+                        if sell_pos - vol > position_limit:
+                            vol = sell_pos - position_limit
+                            breakloop = True
+                        
+                        if ask <= forecasted_price - buy_spread and -vol > 0:
+                            print("BUY", product, str(-vol) + "x", ask)
+                            orders.append(Order(product, ask, -vol))
+                            sell_pos += -vol
+
+                        if breakloop:
+                            break
+
+                    breakloop = False
+
+                    for order in buy_orders:
+                        if current_position == -20:
+                            break
+
+                        bid = order[0]
+                        vol = order[1]
+
+                        if buy_pos - vol < -position_limit:
+                            vol = buy_pos + position_limit
+                            breakloop = True
+
+                        if bid >= forecasted_price + sell_spread and vol > 0:
+                            print("SELL", product, str(vol) + "x", bid)
+                            orders.append(Order(product, bid, -vol))
+                            buy_pos -= vol
+
+                        if breakloop:
+                            break
+
+                    # add open contracts here! 
+                    # check if sell_pos exceeds 20 and buy_pos exceeds -20
+
+                    """
                     if len(order_depth.sell_orders) > 0:
 
                         best_ask = min(order_depth.sell_orders.keys())
@@ -419,6 +470,8 @@ class Trader:
                         if best_bid >= (forecasted_price + sellSpread) and best_bid_volume > 0:
                             print("SELL", product, str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
+                    """
+
                 result[product] = orders
         logger.flush(state, orders)
         return result
