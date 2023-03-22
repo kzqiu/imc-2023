@@ -306,14 +306,12 @@ class Trader:
                     if current_position - best_ask_volume > position_limit:
                         best_ask_volume = current_position - position_limit
                         open_ask_volume = 0
-                        print("LIMIT HIT")
                     else:
                         open_ask_volume = current_position - position_spread - best_ask_volume
                         
                     if current_position - best_bid_volume < -position_limit:
                         best_bid_volume = current_position + position_limit
                         open_bid_volume = 0
-                        print("LIMIT HIT")
                     else:
                         open_bid_volume = current_position + position_spread - best_bid_volume
                         
@@ -321,28 +319,20 @@ class Trader:
                         open_ask_volume = 0         
                     if open_bid_volume < 0:
                         open_bid_volume = 0
-                        
-                    if best_ask == 10000-open_spread and -best_ask_volume > 0:
-                        print("BUY", product, str(-best_ask_volume-open_ask_volume) + "x", 10000-open_spread)
-                        orders.append(Order(product, 10000-open_spread, -best_ask_volume-open_ask_volume))
-                    else:
-                        if -best_ask_volume > 0:
-                            print("BUY", product, str(-best_ask_volume) + "x", best_ask)
-                            orders.append(Order(product, best_ask, -best_ask_volume))
-                        if -open_ask_volume > 0:
-                            print("BUY", product, str(-open_ask_volume) + "x", 10000-open_spread)
-                            orders.append(Order(product, 10000-open_spread, -open_ask_volume))
-                        
-                    if best_bid == 10000+open_spread and best_bid_volume > 0:
-                        print("SELL", product, str(best_bid_volume+open_bid_volume) + "x", 10000+open_spread)
-                        orders.append(Order(product, 10000+open_spread, -best_bid_volume-open_bid_volume))
-                    else:
-                        if best_bid_volume > 0:
-                            print("SELL", product, str(best_bid_volume) + "x", best_bid)
-                            orders.append(Order(product, best_bid, -best_bid_volume))
-                        if open_bid_volume > 0:
-                            print("SELL", product, str(open_bid_volume) + "x", 10000+open_spread)
-                            orders.append(Order(product, 10000+open_spread, -open_bid_volume))
+
+                    if -best_ask_volume > 0:
+                        print("BUY", product, str(-best_ask_volume) + "x", best_ask)
+                        orders.append(Order(product, best_ask, -best_ask_volume))
+                    if -open_ask_volume > 0:
+                        print("BUY", product, str(-open_ask_volume) + "x", 10000-open_spread)
+                        orders.append(Order(product, 10000-open_spread, -open_ask_volume))
+
+                    if best_bid_volume > 0:
+                        print("SELL", product, str(best_bid_volume) + "x", best_bid)
+                        orders.append(Order(product, best_bid, -best_bid_volume))
+                    if open_bid_volume > 0:
+                        print("SELL", product, str(open_bid_volume) + "x", 10000+open_spread)
+                        orders.append(Order(product, 10000+open_spread, -open_bid_volume))
                         
                 result[product] = orders
                 
@@ -353,6 +343,7 @@ class Trader:
                 enough_data = True
                 start_trading = 0
                 position_limit = 20
+                position_spread = 15
                 current_position = state.position.get(product, 0)
                 history_length = 20
                 spread = 3
@@ -390,12 +381,12 @@ class Trader:
                     price_history_banana = np.append(price_history_banana, current_avg_market_price)
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
-                    pred = price_history_banana
+                    #pred = price_history_banana
                     if len(pred) >= history_length+1:
                         pred = pred[1:]
 
                     forecasted_price = model.forecast(pred, 1)[-1]
-                    
+                    """
                     if len(order_depth.sell_orders) > 0:
 
                         best_ask = min(order_depth.sell_orders.keys())
@@ -412,11 +403,64 @@ class Trader:
                         best_bid_volume = order_depth.buy_orders[best_bid]
                         if current_position - best_bid_volume < -position_limit:
                             best_bid_volume = current_position + position_limit
-
                        
                         if best_bid >= (forecasted_price + sellSpread) and best_bid_volume > 0:
                             print("SELL", product, str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
+                    """
+                    
+                    if len(order_depth.sell_orders) > 0:
+                        best_ask = min(order_depth.sell_orders.keys())
+                        
+                        if best_ask <= forecasted_price - buySpread:
+                            best_ask_volume = order_depth.sell_orders[best_ask]
+                            print("BEST_ASK_VOLUME", best_ask_volume)
+                        else:
+                            best_ask_volume = 0
+                    else:
+                        best_ask_volume = 0
+                         
+                    if len(order_depth.buy_orders) > 0:
+                        best_bid = max(order_depth.buy_orders.keys())
+                    
+                        if best_bid >= forecasted_price + sellSpread:
+                            best_bid_volume = order_depth.buy_orders[best_bid]
+                            print("BEST_BID_VOLUME", best_bid_volume)
+                        else:
+                            best_bid_volume = 0 
+                            
+                    if current_position - best_ask_volume > position_limit:
+                        best_ask_volume = current_position - position_limit
+                        open_ask_volume = 0
+                    else:
+                        open_ask_volume = current_position - position_spread - best_ask_volume
+                        
+                    if current_position - best_bid_volume < -position_limit:
+                        best_bid_volume = current_position + position_limit
+                        open_bid_volume = 0
+                    else:
+                        open_bid_volume = current_position + position_spread - best_bid_volume
+                        
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0
+
+                    if -best_ask_volume > 0:
+                        print("BUY", product, str(-best_ask_volume) + "x", best_ask)
+                        orders.append(Order(product, best_ask, -best_ask_volume))
+                    if -open_ask_volume > 0:
+                        print("BUY", product, str(-open_ask_volume) + "x", round(forecasted_price-buySpread*2))
+                        orders.append(Order(product, round(forecasted_price-buySpread*2), -open_ask_volume))
+
+                    if best_bid_volume > 0:
+                        print("SELL", product, str(best_bid_volume) + "x", best_bid)
+                        orders.append(Order(product, best_bid, -best_bid_volume))
+                    if open_bid_volume > 0:
+                        print("SELL", product, str(open_bid_volume) + "x", round(forecasted_price+sellSpread*2))
+                        orders.append(Order(product, round(forecasted_price+sellSpread*2), -open_bid_volume))
+                            
+                            
                 result[product] = orders
         logger.flush(state, orders)
         return result

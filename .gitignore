@@ -1,6 +1,7 @@
 /env
 /venv
 /__pycache__
+/localsim
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
