@@ -355,14 +355,16 @@ class Trader:
                 position_limit = 20
                 current_position = state.position.get(product, 0)
                 history_length = 20
-                spread = 3
-                spread_rate = 0.08
+
+                # Calculating spread
+                spread = 4
+                spread_rate = 0
 
                 buySpread = spread / 2
                 sellSpread = spread / 2
 
                 if (current_position) < 0:
-                    buySpread = spread / 2 - current_position * spread_rate
+                    buySpread = spread / 2 + current_position * spread_rate
                     sellSpread = spread - buySpread
                 else:
                     sellSpread = spread / 2 - current_position * spread_rate
@@ -385,8 +387,8 @@ class Trader:
                 else:
                     current_avg_market_price = price / count
            
+
                 if state.timestamp >= start_trading and enough_data == True:
-                    
                     price_history_banana = np.append(price_history_banana, current_avg_market_price)
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
