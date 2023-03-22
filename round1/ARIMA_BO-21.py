@@ -355,8 +355,8 @@ class Trader:
                 position_limit = 20
                 current_position = state.position.get(product, 0)
                 history_length = 20
-                spread = 1
-                spread_rate = 0.01
+                spread = 3
+                spread_rate = 0.08
 
                 buySpread = spread / 2
                 sellSpread = spread / 2
@@ -365,7 +365,7 @@ class Trader:
                     buySpread = spread / 2 - current_position * spread_rate
                     sellSpread = spread - buySpread
                 else:
-                    sellSpread = spread / 2 + current_position * spread_rate
+                    sellSpread = spread / 2 - current_position * spread_rate
                     buySpread = spread - sellSpread
 
                 order_depth: OrderDepth = state.order_depths[product]
@@ -376,6 +376,7 @@ class Trader:
                 for Trade in state.market_trades.get(product, []):
                     price += Trade.price * Trade.quantity
                     count += Trade.quantity
+
                 if count == 0:
                     if len(price_history_banana) == 0:
                         enough_data = False
@@ -402,7 +403,7 @@ class Trader:
                         if current_position - best_ask_volume > position_limit:
                             best_ask_volume = current_position - position_limit
 
-                        if best_ask <= (forecasted_price + buySpread) and -best_ask_volume > 0:
+                        if best_ask <= (forecasted_price - buySpread) and -best_ask_volume > 0:
                             print("BUY", product, str(-best_ask_volume) + "x", best_ask)
                             orders.append(Order(product, best_ask, -best_ask_volume))
 
@@ -413,7 +414,7 @@ class Trader:
                             best_bid_volume = current_position + position_limit
 
                        
-                        if best_bid >= (forecasted_price - sellSpread) and best_bid_volume > 0:
+                        if best_bid >= (forecasted_price + sellSpread) and best_bid_volume > 0:
                             print("SELL", product, str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
                 result[product] = orders
