@@ -261,7 +261,7 @@ class Trader:
         global price_history_banana
         
         for product in state.order_depths.keys():
-            if product == 'awefPEARLS':
+            if product == 'PEARLS':
                 spread = 1
                 open_spread = 3
                 start_trading = 0
