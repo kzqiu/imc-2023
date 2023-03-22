@@ -51,20 +51,21 @@ class Trader:
         for product in state.order_depths.keys():
             if product == 'BANANAS':
 
-                std_dev = 0.11894678005576327
                     
                 order_depth: OrderDepth = state.order_depths[product]
 
                 orders: list[Order] = []
 
-                rate = 1
+                intercept_err = 0.11894678005576327
+                intercept_coeff = 0.1
 
-                lower_curr = linear(state.timestamp) - std_dev*rate
-                upper_curr = linear(state.timestamp) + std_dev*rate
-                
+                cur_pos = state.position.get(product, 0)
+                pos_coeff = 0.1
+
+                lower_curr = linear(state.timestamp) - intercept_err * intercept_coeff + cur_pos * pos_coeff
+                upper_curr = linear(state.timestamp) + intercept_err * intercept_coeff - cur_pos * pos_coeff
 
                 if len(order_depth.sell_orders) > 0:
-
                     best_ask = min(order_depth.sell_orders.keys())
                     best_ask_volume = order_depth.sell_orders[best_ask]
 
@@ -75,17 +76,13 @@ class Trader:
                 if len(order_depth.buy_orders) != 0:
                     best_bid = max(order_depth.buy_orders.keys())
                     best_bid_volume = order_depth.buy_orders[best_bid]
-                    
+
                     if best_bid >= upper_curr and best_bid_volume > 0:
                         print("SELL", product, str(best_bid_volume) + "x", best_bid)
                         orders.append(Order(product, best_bid, -best_bid_volume))
 
-                        
-                        
                 result[product] = orders
-                
-                
-                
+
             # if product == 'BANANAS':
                 
             #     start_trading = 2000

@@ -269,7 +269,7 @@ class Trader:
         global price_history_banana
         
         for product in state.order_depths.keys():
-            if product == 'PEARLS':
+            if product == 'PEARLSSUIEJFoEJHFIUEHIFUHELIWUHFLIUWEFHLOIEFJOFJIWEOIJF':
                 spread = 1
                 open_spread = 3
                 start_trading = 0
@@ -349,16 +349,27 @@ class Trader:
                 
                 
             if product == 'BANANAS':
+                # Add previous 20 datapoints
                 enough_data = True
                 start_trading = 0
-                position_limit = 15
-                current_position = state.position.get(product,0)
+                position_limit = 20
+                current_position = state.position.get(product, 0)
                 history_length = 20
-                spread = 3
-                
+                spread = 1
+                spread_rate = 0.01
+
+                buySpread = spread / 2
+                sellSpread = spread / 2
+
+                if (current_position) < 0:
+                    buySpread = spread / 2 - current_position * spread_rate
+                    sellSpread = spread - buySpread
+                else:
+                    sellSpread = spread / 2 + current_position * spread_rate
+                    buySpread = spread - sellSpread
+
                 order_depth: OrderDepth = state.order_depths[product]
                 orders: list[Order] = []
-
                     
                 price = 0
                 count = 0
@@ -379,32 +390,30 @@ class Trader:
                     model = ARIMA(4,0,1)
                     pred = model.fit_predict(price_history_banana)
                     pred = price_history_banana
-                    prev_sma = np.average(pred)
                     if len(pred) >= history_length+1:
                         pred = pred[1:]
 
-                    current_sma = np.average(pred)
-                    std = np.std(pred)
-                    m = 2
-                    upper_curr = current_sma + m * std
-                    upper_prev = prev_sma + m * std
-                    lower_curr = current_sma - m * std
-                    lower_prev = prev_sma - m * std
+                    forecasted_price = model.forecast(pred, 1)[-1]
                     
                     if len(order_depth.sell_orders) > 0:
 
                         best_ask = min(order_depth.sell_orders.keys())
                         best_ask_volume = order_depth.sell_orders[best_ask]
+                        if current_position - best_ask_volume > position_limit:
+                            best_ask_volume = current_position - position_limit
 
-                        if pred[-2] > lower_prev and best_ask <= lower_curr and -best_ask_volume > 0:
+                        if best_ask <= (forecasted_price + buySpread) and -best_ask_volume > 0:
                             print("BUY", product, str(-best_ask_volume) + "x", best_ask)
                             orders.append(Order(product, best_ask, -best_ask_volume))
 
                     if len(order_depth.buy_orders) != 0:
                         best_bid = max(order_depth.buy_orders.keys())
                         best_bid_volume = order_depth.buy_orders[best_bid]
+                        if current_position - best_bid_volume < -position_limit:
+                            best_bid_volume = current_position + position_limit
+
                        
-                        if pred[-2] < upper_prev and best_bid >= upper_curr and best_bid_volume > 0:
+                        if best_bid >= (forecasted_price - sellSpread) and best_bid_volume > 0:
                             print("SELL", product, str(best_bid_volume) + "x", best_bid)
                             orders.append(Order(product, best_bid, -best_bid_volume))
                 result[product] = orders
