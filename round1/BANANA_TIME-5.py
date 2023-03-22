@@ -463,5 +463,5 @@ class Trader:
                             
                 result[product] = orders
         logger.flush(state, orders)
-        return 
+        return result
 
