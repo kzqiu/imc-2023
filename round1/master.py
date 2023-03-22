@@ -5,30 +5,6 @@ from datamodel import Order, OrderDepth, ProsperityEncoder, TradingState, Symbol
 from typing import Any, Dict, List
 
 
-class Logger:
-    def __init__(self) -> None:
-        self.logs = ""
-
-    def print(self, *objects: Any, sep: str = " ", end: str = "\n") -> None:
-        self.logs += sep.join(map(str, objects)) + end
-
-    def flush(self, state: TradingState, orders: dict[Symbol, list[Order]]) -> None:
-        logs = self.logs
-        if logs.endswith("\n"):
-            logs = logs[:-1]
-
-        print(json.dumps({
-            "state": state,
-            "orders": orders,
-            "logs": logs,
-        }, cls=ProsperityEncoder, separators=(",", ":"), sort_keys=True))
-
-        self.state = None
-        self.orders = {}
-        self.logs = ""
-
-logger = Logger()
-
 def least_squares(x, y):
     if np.linalg.det(x.T @ x) != 0:
         return np.linalg.inv((x.T @ x)) @ (x.T @ y)
@@ -240,7 +216,7 @@ class ARIMA(LinearModel):
         return self.return_output(y)
 
 
-price_history_banana = np.array([4894.5, 4894, 4894, 4891.5, 4894, 4893.5, 4894, 4894.5, 4895.5, 4894])
+price_history_banana = np.array([4876.5, 4875, 4875, 4874.5, 4874.5, 4873, 4873.5, 4876.5, 4873.5, 4871.5, 4872.5, 4872, 4871.5, 4871.5, 4872,  4870.5, 4869.5, 4875.5, 4872.5, 4873])
 
 """
 Executes the trades
@@ -428,31 +404,6 @@ class Trader:
                     # add open contracts here! 
                     # check if sell_pos exceeds 20 and buy_pos exceeds -20
 
-                    """
-                    if len(order_depth.sell_orders) > 0:
-
-                        best_ask = min(order_depth.sell_orders.keys())
-                        best_ask_volume = order_depth.sell_orders[best_ask]
-                        if current_position - best_ask_volume > position_limit:
-                            best_ask_volume = current_position - position_limit
-
-                        if best_ask <= (forecasted_price - buySpread) and -best_ask_volume > 0:
-                            print("BUY", product, str(-best_ask_volume) + "x", best_ask)
-                            orders.append(Order(product, best_ask, -best_ask_volume))
-
-                    if len(order_depth.buy_orders) != 0:
-                        best_bid = max(order_depth.buy_orders.keys())
-                        best_bid_volume = order_depth.buy_orders[best_bid]
-                        if current_position - best_bid_volume < -position_limit:
-                            best_bid_volume = current_position + position_limit
-
-                       
-                        if best_bid >= (forecasted_price + sellSpread) and best_bid_volume > 0:
-                            print("SELL", product, str(best_bid_volume) + "x", best_bid)
-                            orders.append(Order(product, best_bid, -best_bid_volume))
-                    """
-
                 result[product] = orders
 
-        logger.flush(state, orders)
         return result
