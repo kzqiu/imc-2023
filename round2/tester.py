@@ -4,6 +4,30 @@ import json
 from datamodel import Order, OrderDepth, ProsperityEncoder, TradingState, Symbol 
 from typing import Any, Dict, List
 
+class Logger:
+    def __init__(self) -> None:
+        self.logs = ""
+
+    def print(self, *objects: Any, sep: str = " ", end: str = "\n") -> None:
+        self.logs += sep.join(map(str, objects)) + end
+
+    def flush(self, state: TradingState, orders: dict[Symbol, list[Order]]) -> None:
+        logs = self.logs
+        if logs.endswith("\n"):
+            logs = logs[:-1]
+
+        print(json.dumps({
+            "state": state,
+            "orders": orders,
+            "logs": logs,
+        }, cls=ProsperityEncoder, separators=(",", ":"), sort_keys=True))
+
+        self.state = None
+        self.orders = {}
+        self.logs = ""
+
+logger = Logger()
+
 """
 ARIMA Functions!
 """
@@ -259,26 +283,22 @@ def edge(open: np.array, high: np.array, low: np.array, close: np.array) -> floa
 ##################################################################################
 
 # historical data!
-price_history_banana = np.array([])
-open_prices = np.array([])
-high_prices = np.array([])
-low_prices = np.array([]) 
-close_prices = np.array([])
 
 class Trader:
     def __init__(self):
         self.holdings = 0
         self.last_trade = 0
 
+        self.history_length = 20
+        self.price_history_banana = np.array([])
+        self.open_prices = np.array([])
+        self.high_prices = np.array([])
+        self.low_prices = np.array([]) 
+        self.close_prices = np.array([])
+        self.model = ARIMA(4, 0, 1)
+
     def run(self, state: TradingState) -> dict[Symbol, List[Order]]:
-        """
-        Takes all buy and sell orders for all symbols as an input,
-        and outputs a list of orders to be sent
-        """
-        
         result = {}
-        
-        global price_history_banana
         
         for product in state.order_depths.keys():
             orders: list[Order] = []
@@ -290,21 +310,6 @@ class Trader:
 
                 position_limit = 20
                 current_position = state.position.get(product, 0)
-                history_length = 20
-
-                # Calculating spread
-                spread = 4
-                spread_rate = 0
-
-                buy_spread = spread / 2
-                sell_spread = spread / 2
-
-                # if (current_position) < 0:
-                #     buy_spread = spread / 2 + current_position * spread_rate
-                #     sell_spread = spread - buy_spread
-                # else:
-                #     sell_spread = spread / 2 - current_position * spread_rate
-                #     buy_spread = spread - sell_spread
 
                 order_depth: OrderDepth = state.order_depths[product]
                 orders: list[Order] = []
@@ -316,23 +321,29 @@ class Trader:
                     count += Trade.quantity
 
                 if count == 0:
-                    if len(price_history_banana) == 0:
+                    if len(self.price_history_banana) == 0:
                         enough_data = False
                     else:
-                        current_avg_market_price = price_history_banana[-1]
+                        current_avg_market_price = self.price_history_banana[-1]
                 else:
                     current_avg_market_price = price / count
            
 
                 if state.timestamp >= start_trading and enough_data == True:
-                    price_history_banana = np.append(price_history_banana, current_avg_market_price)
-                    model = ARIMA(4,0,1)
-                    pred = model.fit_predict(price_history_banana)
+                    # Calculating fair price
+                    self.price_history_banana = np.append(self.price_history_banana, current_avg_market_price)
+                    pred = self.model.fit_predict(self.price_history_banana)
 
-                    if len(pred) >= history_length+1:
+                    if len(pred) >= self.history_length + 1:
                         pred = pred[1:]
 
-                    forecasted_price = model.forecast(pred, 1)[-1]
+                    forecasted_price = self.model.forecast(pred, 1)[-1]
+
+                    # Calculating spread
+                    spread = 4
+
+                    buy_spread = spread / 2
+                    sell_spread = spread / 2
 
                     sell_orders = sorted([sell_ord for sell_ord in order_depth.sell_orders.items()], reverse=True)
                     buy_orders = sorted([buy_ord for buy_ord in order_depth.buy_orders.items()], reverse=True)
@@ -384,7 +395,6 @@ class Trader:
                     # add open contracts here! 
                     # check if sell_pos exceeds 20 and buy_pos exceeds -20
 
-                break
-
             result[product] = orders
+        logger.flush(state, orders)
         return result
