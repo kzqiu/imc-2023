@@ -114,8 +114,63 @@ class Trader:
                         orders_pina_coladas.append(Order('PINA_COLADAS', best_bid, -best_bid_volume))
                 elif exit_signal[exit_signal.size - 1]:
                     # Reset Positions to 0
-                    coconut_positon = state.position.get('COCONUTS', 0)
-                    pina_colada_positon = state.position.get('PINA_COLADAS', 0)
+                    coconut_position = state.position.get('COCONUTS', 0)
+                    pina_colada_position = state.position.get('PINA_COLADAS', 0)
+                    if coconut_position < 0:
+                        coconut_asks = order_depth_coconuts.sell_orders
+                        while coconut_position < 0:
+                            # Go through dict looking for best sell orders and append order.
+                            # Then subtract order amount from coconut_position
+                            # Remove order from the dict
+                            best_ask = min(coconut_asks.keys())
+                            best_ask_volume = order_depth_coconuts.sell_order[best_ask]
+                            if best_ask_volume < coconut_position:
+                                best_ask_volume = coconut_position
+                            order_depth_coconuts.append(Order('COCONUTS', best_ask, -best_ask_volume))
+                            coconut_position -= best_ask_volume
+                            coconut_asks.pop(best_ask)
+                            
+                    elif coconut_position > 0:
+                        coconut_bids = order_depth_coconuts.buy_orders
+                        while coconut_position > 0:
+                            # Go through dict looking for best buy orders and append order.
+                            # Then subtract order amount from coconut_position
+                            # Remove order from the dict
+                            best_bid = max(coconut_bids.keys())
+                            best_bid_volume = order_depth_coconuts.buy_order[best_bid]
+                            if best_bid_volume > coconut_position:
+                                best_bid_volume = coconut_position
+                            order_depth_coconuts.append(Order('COCONUTS', best_bid, -best_bid_volume))
+                            coconut_position -= best_bid_volume
+                            coconut_asks.pop(best_bid)
+
+                    if pina_colada_position < 0:
+                        pina_colada_asks = order_depth_pina_coladas.sell_orders
+                        while pina_colada_position < 0:
+                            # Go through dict looking for best sell orders and append order.
+                            # Then subtract order amount from pina_colada_position
+                            # Remove order from the dict
+                            best_ask = min(pina_colada_asks.keys())
+                            best_ask_volume = order_depth_pina_coladas.sell_order[best_ask]
+                            if best_ask_volume < pina_colada_position:
+                                best_ask_volume = pina_colada_position
+                            order_depth_pina_coladas.append(Order('PINA_COLADA', best_ask, -best_ask_volume))
+                            pina_colada_position -= best_ask_volume
+                            pina_colada_asks.pop(best_ask)
+
+                    elif pina_colada_position > 0:
+                        pina_colada_bids = order_depth_pina_coladas.sell_orders
+                        while pina_colada_position > 0:
+                            # Go through dict looking for best sell orders and append order.
+                            # Then subtract order amount from pina_colada_position
+                            # Remove order from the dict
+                            best_bid = min(pina_colada_bids.keys())
+                            best_bid_volume = order_depth_pina_coladas.buy_order[best_bid]
+                            if best_bid_volume > pina_colada_position:
+                                best_bid_volume = pina_colada_position
+                            order_depth_pina_coladas.append(Order('PINA_COLADA', best_bid, -best_bid_volume))
+                            pina_colada_position -= best_bid_volume
+                            pina_colada_bids.pop(best_bid)
                     
 
 
@@ -125,6 +180,6 @@ class Trader:
         # Return the dict of orders
         # These possibly contain buy or sell orders for PEARLS
         # Depending on the logic above
-        logger.flush(state, orders)
+        logger.flush(state, orders_coconuts + orders_pina_coladas)
 
         return result
