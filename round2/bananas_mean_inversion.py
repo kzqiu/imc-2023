@@ -128,8 +128,8 @@ class Trader:
 
                 # Getting spread!
                 # intervals to look back on for open/high/low/close
-                spread = 2
-                open_spread = 3
+                spread = 1.5
+                open_spread = 2
                 start_trading = 0
                 position_spread = 15
                 order_depth: OrderDepth = state.order_depths[product]
