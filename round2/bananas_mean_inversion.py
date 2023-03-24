@@ -113,6 +113,7 @@ class Trader:
         self.low = []
         self.close = []
         self.rsi = []
+        initial_price = 0
 
     def run(self, state: TradingState) -> dict[Symbol, List[Order]]:
         result = {}
@@ -125,95 +126,79 @@ class Trader:
                 position_limit = 20
                 current_position = state.position.get(product, 0)
 
-                buy_orders = state.order_depths[product].buy_orders
-                sell_orders = state.order_depths[product].sell_orders
-                orders: list[Order] = []
-
-                best_bid = max(buy_orders.keys())
-                best_ask = min(sell_orders.keys())
-
-                # Getting fair price, uses last trade by default
-                fair_price = self.last_trade
-
-                # If there are valid buy and sell orders, then calculate mean of mid and weighted mid prices
-                if len(buy_orders) > 0 and len(sell_orders) > 0:
-                    fair_price = (mid_price(best_bid, best_ask) + weighted_mid_price(best_bid, buy_orders[best_bid], best_ask, -sell_orders[best_ask])) / 2
-                
-                # If fair price is still default value, just skip this iteration!
-                if fair_price == 0:
-                    continue
-
                 # Getting spread!
                 # intervals to look back on for open/high/low/close
-                n = 20
-
-                self.open.append(fair_price)
-                self.close.append(fair_price)
+                spread = 2
+                open_spread = 3
+                start_trading = 0
+                position_spread = 15
+                order_depth: OrderDepth = state.order_depths[product]
+                orders: list[Order] = []
+                
+                best_bid = max(order_depth.buy_orders.keys())
+                best_ask = min(order_depth.sell_orders.keys())
 
                 if state.timestamp == 0:
-                    self.high.append(fair_price)
-                    self.low.append(fair_price)
-                else:
-                    self.high.append(max(self.high[-1], fair_price))
-                    self.low.append(max(self.low[-1], fair_price))
-                
-                if len(self.open) > n:
-                    self.high = self.high[1:]
-                    self.low = self.low[1:]
-                    self.open = self.open[1:]
-                    self.close = self.close[1:]
+                    self.initial_price = mid_price(best_bid, best_ask)
 
-                # Trading code
-                if state.timestamp > 1000:
-                
-                    p_spread = edge(self.open, self.high, self.low, self.close)
+                # Getting fair price, uses last trade by default
+                fair_price = state.timestamp * 4.35e-5 + self.initial_price
+                    
+                if state.timestamp >= start_trading:
+                    if len(order_depth.sell_orders) > 0:
+                        best_ask = min(order_depth.sell_orders.keys())
+                        
+                        if best_ask <= fair_price-spread:
+                            best_ask_volume = order_depth.sell_orders[best_ask]
+                            print("BEST_ASK_VOLUME", best_ask_volume)
+                        else:
+                            best_ask_volume = 0
+                    else:
+                        best_ask_volume = 0
+                         
+                    if len(order_depth.buy_orders) > 0:
+                        best_bid = max(order_depth.buy_orders.keys())
+                    
+                        if best_bid >= fair_price+spread:
+                            best_bid_volume = order_depth.buy_orders[best_bid]
+                            print("BEST_BID_VOLUME", best_bid_volume)
+                        else:
+                            best_bid_volume = 0 
+                    else:
+                        best_bid_volume = 0
+                    
+                    if current_position - best_ask_volume > position_limit:
+                        best_ask_volume = current_position - position_limit
+                        open_ask_volume = 0
+                    else:
+                        open_ask_volume = current_position - position_spread - best_ask_volume
+                        
+                    if current_position - best_bid_volume < -position_limit:
+                        best_bid_volume = current_position + position_limit
+                        open_bid_volume = 0
+                    else:
+                        open_bid_volume = current_position + position_spread - best_bid_volume
+                        
+                    if -open_ask_volume < 0:
+                        open_ask_volume = 0         
+                    if open_bid_volume < 0:
+                        open_bid_volume = 0
 
-                    momentum = slope_momentum(3, self.open)
+                    if -best_ask_volume > 0:
+                        print("BUY", product, str(-best_ask_volume) + "x", best_ask)
+                        orders.append(Order(product, best_ask, -best_ask_volume))
+                    if -open_ask_volume > 0:
+                        print("BUY", product, str(-open_ask_volume) + "x", fair_price-open_spread)
+                        orders.append(Order(product, fair_price-open_spread, -open_ask_volume))
 
-                    # FULL BID-ASK SPREAD RANGE!
-                    spread = p_spread * fair_price
-
-                    # parameter for volume to purchase
-                    volume_alpha = 5
-
-                    sells = sorted([it for it in sell_orders.items()], reverse=True)
-                    buys = sorted([it for it in buy_orders.items()], reverse=True)
-
-                    agg_vol = current_position
-
-                    for order in sells:
-                        if agg_vol == 20:
-                            break
-
-                        ask = order[0]
-                        vol = order[1]
-
-                        # TODO: Add position component!
-                        desired_vol = round(momentum * volume_alpha * spread / (ask - fair_price))
-                        real_vol = min(desired_vol, position_limit - agg_vol, -vol)
-
-                        if ask <= fair_price + spread / 2 + momentum:
-                            print("BUY", product, str(real_vol) + "x", ask)
-                            agg_vol += real_vol 
-                            orders.append(Order(product, ask, real_vol))
-
-                    agg_vol = current_position
-
-                    for order in buys:
-                        if agg_vol == -20:
-                            break
-
-                        bid = order[0]
-                        vol = order[1]
-
-                        # TODO: Add position component!
-                        desired_vol = round(momentum * volume_alpha * spread / (fair_price - bid))
-                        real_vol = max(desired_vol, -position_limit - agg_vol, -vol)
-
-                        if bid >= fair_price - spread / 2 + momentum:
-                            print("SELL", product, str(real_vol) + "x", bid)
-                            agg_vol += real_vol
-                            orders.append(Order(product, bid, real_vol))
+                    if best_bid_volume > 0:
+                        print("SELL", product, str(best_bid_volume) + "x", best_bid)
+                        orders.append(Order(product, best_bid, -best_bid_volume))
+                    if open_bid_volume > 0:
+                        print("SELL", product, str(open_bid_volume) + "x", fair_price+open_spread)
+                        orders.append(Order(product, fair_price+open_spread, -open_bid_volume))
+                        
+                result[product] = orders
 
             result[product] = orders
         logger.flush(state, orders)
