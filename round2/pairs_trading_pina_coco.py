@@ -50,7 +50,8 @@ class Trader:
         # Initialize the method output dict as an empty dict
         result = {}
         # Initialize the list of Orders to be sent as an empty list
-        orders: list[Order] = []
+        orders_coconuts: list[Order] = []
+        orders_pina_coladas: list[Order] = []
         coconuts_data = [8000 for i in range(30)]
         pina_coladas_data = [15000 for i in range(30)]
 
@@ -89,13 +90,13 @@ class Trader:
                         best_ask = min(order_depth_pina_coladas.buy_orders.keys())
                         best_ask_volume = order_depth_pina_coladas.buy_orders[best_ask]
                         print("BUY PINA_COLADAS", str(-best_ask_volume) + "x", best_ask)
-                        orders.append(Order('PINA_COLADAS', best_ask, -best_ask_volume))
+                        orders_pina_coladas.append(Order('PINA_COLADAS', best_ask, -best_ask_volume))
                     #sell coconuts
                     if len(order_depth_coconuts.buy_orders) != 0:
                         best_bid = max(order_depth_coconuts.sell_orders.keys())
                         best_bid_volume = order_depth_coconuts.sell_orders[best_bid]
                         print("SELL COCONUTS", str(best_bid_volume) + "x", best_bid)
-                        orders.append(Order('COCONUTS', best_bid, -best_bid_volume))
+                        orders_coconuts.append(Order('COCONUTS', best_bid, -best_bid_volume))
 
                 elif short_signal[short_signal.size-1]:
                     #short position
@@ -104,17 +105,23 @@ class Trader:
                         best_ask = min(order_depth_coconuts.sell_orders.keys())
                         best_ask_volume = order_depth_coconuts.sell_orders[best_ask]
                         print("BUY COCONUTS", str(-best_ask_volume) + "x", best_ask)
-                        orders.append(Order('COCONUTS', best_ask, -best_ask_volume))
+                        orders_coconuts.append(Order('COCONUTS', best_ask, -best_ask_volume))
                     #sell pina_coladas
                     if len(order_depth_pina_coladas.buy_orders) != 0:
                         best_bid = max(order_depth_pina_coladas.buy_orders.keys())
                         best_bid_volume = order_depth_pina_coladas.buy_orders[best_bid]
                         print("SELL PINA_COLADAS", str(best_bid_volume) + "x", best_bid)
-                        orders.append(Order('PINA_COLADAS', best_bid, -best_bid_volume))
+                        orders_pina_coladas.append(Order('PINA_COLADAS', best_bid, -best_bid_volume))
+                elif exit_signal[exit_signal.size - 1]:
+                    # Reset Positions to 0
+                    coconut_positon = state.position.get('COCONUTS', 0)
+                    pina_colada_positon = state.position.get('PINA_COLADAS', 0)
+                    
 
 
         # Add all the above orders to the result dict
-        result[product] = orders
+        result['COCONUTS'] = orders_coconuts
+        result['PINA_COLADAS'] = orders_pina_coladas
         # Return the dict of orders
         # These possibly contain buy or sell orders for PEARLS
         # Depending on the logic above
