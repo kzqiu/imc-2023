@@ -171,7 +171,7 @@ class Trader:
                     momentum = slope_momentum(3, self.open)
 
                     # FULL BID-ASK SPREAD RANGE!
-                    spread = p_spread * fair_price + momentum
+                    spread = p_spread * fair_price
 
                     # parameter for volume to purchase
                     volume_alpha = 5
@@ -192,7 +192,7 @@ class Trader:
                         desired_vol = round(momentum * volume_alpha * spread / (ask - fair_price))
                         real_vol = min(desired_vol, position_limit - agg_vol, -vol)
 
-                        if ask <= fair_price + spread / 2:
+                        if ask <= fair_price + spread / 2 + momentum:
                             print("BUY", product, str(real_vol) + "x", ask)
                             agg_vol += real_vol 
                             orders.append(Order(product, ask, real_vol))
@@ -210,7 +210,7 @@ class Trader:
                         desired_vol = round(momentum * volume_alpha * spread / (fair_price - bid))
                         real_vol = max(desired_vol, -position_limit - agg_vol, -vol)
 
-                        if bid >= fair_price - spread / 2:
+                        if bid >= fair_price - spread / 2 + momentum:
                             print("SELL", product, str(real_vol) + "x", bid)
                             agg_vol += real_vol
                             orders.append(Order(product, bid, real_vol))
