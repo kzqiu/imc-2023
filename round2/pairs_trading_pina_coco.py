@@ -77,9 +77,9 @@ class Trader:
                 spread_std = spread.rolling(window=30).std()
                 zscore = (spread - spread_mean) / spread_std
 
-                long_signal = zscore  < -2.0
-                short_signal = zscore > 2.0
-                exit_signal = abs(zscore) < 1.0
+                long_signal = zscore  < -1
+                short_signal = zscore > 1
+                exit_signal = abs(zscore) < 1
 
 
 
