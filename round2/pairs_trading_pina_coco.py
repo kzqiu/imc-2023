@@ -127,8 +127,8 @@ class Trader:
                         print("BUY PINA_COLADAS", str(-best_ask_volume) + "x", best_ask)
                         orders_pina_coladas.append(Order('PINA_COLADAS', best_ask, -best_ask_volume))
                     
-                # elif abs(zscore) < 0.5 or (abs(pina_coladas_position) >= 300 and abs(coconuts_position) >= 600):
-                elif abs(zscore) < 0.5:
+                elif abs(zscore) < 0.5 or (abs(pina_coladas_position) >= 300 and abs(coconuts_position) >= 600):
+                # elif abs(zscore) < 0.5:
                     # Reset Positions to 0
                     if coconuts_position < 0:
                         coconut_asks = order_depth_coconuts.sell_orders
