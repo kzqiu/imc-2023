@@ -76,9 +76,81 @@ class Trader:
         orders_coconuts: list[Order] = []
         orders_pina_coladas: list[Order] = []
         orders_berries: list[Order] = []
+        orders_pearls: list[Order] = []
 
         # Iterate over all the keys (the available products) contained in the order depths
         for product in state.order_depths.keys():
+            
+            if product == 'PEARLS':
+                spread = 1
+                open_spread = 3
+                position_limit = 20
+                position_spread = 15
+                current_position = state.position.get("PEARLS",0)
+                
+                order_depth_pearls: OrderDepth = state.order_depths["PEARLS"]
+                
+                if len(order_depth_pearls.sell_orders) > 0:
+                    best_ask = min(order_depth_pearls.sell_orders.keys())
+
+                    if best_ask <= 10000-spread:
+                        best_ask_volume = order_depth_pearls.sell_orders[best_ask]
+                    else:
+                        best_ask_volume = 0
+                else:
+                    best_ask_volume = 0
+
+                if len(order_depth_pearls.buy_orders) > 0:
+                    best_bid = max(order_depth_pearls.buy_orders.keys())
+
+                    if best_bid >= 10000+spread:
+                        best_bid_volume = order_depth_pearls.buy_orders[best_bid]
+                    else:
+                        best_bid_volume = 0 
+                else:
+                    best_bid_volume = 0
+
+                if current_position - best_ask_volume > position_limit:
+                    best_ask_volume = current_position - position_limit
+                    open_ask_volume = 0
+                else:
+                    open_ask_volume = current_position - position_spread - best_ask_volume
+
+                if current_position - best_bid_volume < -position_limit:
+                    best_bid_volume = current_position + position_limit
+                    open_bid_volume = 0
+                else:
+                    open_bid_volume = current_position + position_spread - best_bid_volume
+
+                if -open_ask_volume < 0:
+                    open_ask_volume = 0         
+                if open_bid_volume < 0:
+                    open_bid_volume = 0
+
+                if best_ask == 10000-open_spread and -best_ask_volume > 0:
+                    print("BUY PEARLS", str(-best_ask_volume-open_ask_volume) + "x", 10000-open_spread)
+                    orders_pearls.append(Order("PEARLS", 10000-open_spread, -best_ask_volume-open_ask_volume))
+                else:
+                    if -best_ask_volume > 0:
+                        print("BUY PEARLS", str(-best_ask_volume) + "x", best_ask)
+                        orders_pearls.append(Order(product, best_ask, -best_ask_volume))
+                    if -open_ask_volume > 0:
+                        print("BUY PEARLS", str(-open_ask_volume) + "x", 10000-open_spread)
+                        orders_pearls.append(Order(product, 10000-open_spread, -open_ask_volume))
+
+                if best_bid == 10000+open_spread and best_bid_volume > 0:
+                    print("SELL PEARLS", str(best_bid_volume+open_bid_volume) + "x", 10000+open_spread)
+                    orders_pearls.append(Order(product, 10000+open_spread, -best_bid_volume-open_bid_volume))
+                else:
+                    if best_bid_volume > 0:
+                        print("SELL PEARLS", str(best_bid_volume) + "x", best_bid)
+                        orders_pearls.append(Order(product, best_bid, -best_bid_volume))
+                    if open_bid_volume > 0:
+                        print("SELL PEARLS", str(open_bid_volume) + "x", 10000+open_spread)
+                        orders_pearls.append(Order(product, 10000+open_spread, -open_bid_volume))
+                        
+            
+##################################################################################
             
             if product == 'BERRIES':
                 position = state.position.get(product, 0)
@@ -93,12 +165,12 @@ class Trader:
                 """
 
                 if time >= 90000 and time < 300000 and position != position_limit:
-                    best_ask = min(state.order_depths[product].sell_orders.items())
-                    orders_berries.append(Order(product, best_ask[0], min(-best_ask[1], position_limit - position)))
+                    best_ask = min(state.order_depths["BERRIES"].sell_orders.items())
+                    orders_berries.append(Order("BERRIES", best_ask[0], min(-best_ask[1], position_limit - position)))
                 
                 if time >= 500000 and time < 505000 and position != -position_limit:
-                    best_bid = max(state.order_depths[product].buy_orders.items())
-                    orders_berries.append(Order(product, best_bid[0], max(-best_bid[1], - position_limit - position)))
+                    best_bid = max(state.order_depths["BERRIES"].buy_orders.items())
+                    orders_berries.append(Order("BERRIES", best_bid[0], max(-best_bid[1], - position_limit - position)))
 
 ##################################################################################
             
@@ -281,6 +353,7 @@ class Trader:
 
 
         # Add all the above orders to the result dict
+        result['PEARLS'] = orders_pearls
         result['DIVING_GEAR'] = orders_diving_gear
         result['COCONUTS'] = orders_coconuts
         result['PINA_COLADAS'] = orders_pina_coladas
