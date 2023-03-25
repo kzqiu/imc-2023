@@ -51,8 +51,8 @@ def get_variance():
 
 class Trader:
     def __init__(self):
-        self.gamma = 0.1 # try 0.5?
-        self.kappa = 2 # market liquidity
+        self.gamma = 0.2 # try 0.5?
+        self.kappa = 1.5 # market liquidity
         self.time_horizon = 100000.0
         self.A = 292.991854896
 

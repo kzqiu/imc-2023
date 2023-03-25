@@ -37,13 +37,29 @@ class Trader:
         for product in state.order_depths.keys():
             orders: list[Order] = []
 
+##################################################################################
+
             if product == 'BERRIES':
+                position = state.position.get(product, 0)
+                position_limit = 250
+                time = state.timestamp % 1000000
+
                 """
                 Strategy:
                 - Buy at start of day + delta (est. 10000)
                 - Hold until midday (approx. state.timestamp % 1000000 >= 500000)
                 - Hold at midday and switch positions!
                 """
+
+                if time >= 10000 and time < 12000 and position != position_limit:
+                    best_ask = min(state.order_depths[product].sell_orders.items())
+                    orders.append(Order(product, best_ask[0], min(-best_ask[1], position_limit - position)))
+                
+                if time >= 50000 and time < 50500 and position != -position_limit:
+                    best_bid = max(state.order_depths[product].buy_orders.items())
+                    orders.append(Order(product, best_bid[0], max(-best_bid[1], - position_limit - position)))
+
+##################################################################################
 
                 result[product] = orders
         
