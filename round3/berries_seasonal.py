@@ -51,11 +51,11 @@ class Trader:
                 - Hold at midday and switch positions!
                 """
 
-                if time >= 10000 and time < 12000 and position != position_limit:
+                if time >= 100000 and time < 110000 and position != position_limit:
                     best_ask = min(state.order_depths[product].sell_orders.items())
                     orders.append(Order(product, best_ask[0], min(-best_ask[1], position_limit - position)))
                 
-                if time >= 50000 and time < 50500 and position != -position_limit:
+                if time >= 500000 and time < 510000 and position != -position_limit:
                     best_bid = max(state.order_depths[product].buy_orders.items())
                     orders.append(Order(product, best_bid[0], max(-best_bid[1], - position_limit - position)))
 
