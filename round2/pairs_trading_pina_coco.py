@@ -40,25 +40,15 @@ def get_zscore(S1, S2, window1, window2):
     ratios = S1/S2
     ma1 = ratios[-window1:].mean()
     ma2 = ratios[-window2:].mean()
-    std = ratios[-window2:].std()
+    std = ratios[-window1:].std()
     zscore = (ma1 - ma2)/std
 
     return [zscore[0], float(ratios.iloc[-1])]
 
 class Trader:
     def __init__(self):
-            self.coconuts_data = [8000 for i in range(100)]
-            self.pina_coladas_data = [15000 for i in range(100)]
-
-    lastAcceptablePrice_pearls = 10000
-    lastAcceptablePrice_bananas = 4800
-    lastAcceptablePrice_coconuts = 7000
-    lastAcceptablePrice_pina_coladas = 14000
-    bananas_max = 20
-    pearls_max = 20
-    pina_coladas_max = 300
-    coconuts_max = 600
-    diff_from_mean = 0.005
+            self.coconuts_data = [8000.0 for i in range(200)]
+            self.pina_coladas_data = [15000.0 for i in range(200)]
 
 
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
@@ -78,7 +68,7 @@ class Trader:
         for product in state.order_depths.keys():
 
             if product == "COCONUTS":
-                window1 = 100
+                window1 = 120
                 window2 = 5
                 
                 order_depth_coconuts: OrderDepth = state.order_depths['COCONUTS']
