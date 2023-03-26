@@ -79,6 +79,8 @@ class Trader:
                 position_limit = 20
                 position_spread = 15
                 current_position = state.position.get("PEARLS",0)
+                best_ask = 0
+                best_bid = 0
                 
                 order_depth_pearls: OrderDepth = state.order_depths["PEARLS"]
                 
