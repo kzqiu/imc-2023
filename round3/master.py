@@ -40,25 +40,17 @@ def get_zscore(S1, S2, window1, window2):
     ratios = S1/S2
     ma1 = ratios[-window1:].mean()
     ma2 = ratios[-window2:].mean()
-    std = ratios[-window2:].std()
+    std = ratios[-window1:].std()
     zscore = (ma1 - ma2)/std
 
     return [zscore[0], float(ratios.iloc[-1])]
 
 class Trader:
     def __init__(self):
-            self.coconuts_data = [8000 for i in range(100)]
-            self.pina_coladas_data = [15000 for i in range(100)]
-            self.dolphin_data = [3074 for i in range(100)]
-            self.gear_data = [99100 for i in range(100)]
-
-    lastAcceptablePrice_pearls = 10000
-    lastAcceptablePrice_bananas = 4800
-    lastAcceptablePrice_coconuts = 7000
-    lastAcceptablePrice_pina_coladas = 14000
-    bananas_max = 20
-    coconuts_max = 600
-    diff_from_mean = 0.005
+            self.coconuts_data = [8000.0 for i in range(100)]
+            self.pina_coladas_data = [15000.0 for i in range(100)]
+            self.dolphin_data = [3074.0 for i in range(100)]
+            self.gear_data = [99100.0 for i in range(100)]
 
 
     def run(self, state: TradingState) -> Dict[str, List[Order]]:
@@ -175,7 +167,7 @@ class Trader:
 ##################################################################################
             
             if product == "COCONUTS":
-                window1 = 100
+                window1 = 120
                 window2 = 5
                 
                 order_depth_coconuts: OrderDepth = state.order_depths['COCONUTS']
@@ -284,8 +276,8 @@ class Trader:
                             pina_colada_bids.pop(best_bid)
 
             if product == "DIVING_GEAR":
-                window1 = 20
-                window2 = 5
+                window1 = 5
+                window2 = 20
                 
                 order_depth_diving_gear: OrderDepth = state.order_depths['DIVING_GEAR']
 
@@ -297,7 +289,7 @@ class Trader:
 
                 couple = get_zscore(self.gear_data, self.dolphin_data, window1, window2)
                 print(couple)
-                zscore = couple[0]
+                zscore = -couple[0]
                 ratio = couple[1]
                 diving_gear_position = state.position.get('DIVING_GEAR', 0)
 
