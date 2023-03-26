@@ -29,21 +29,21 @@ class Logger:
 logger = Logger()
 
 def get_zscore(S1, S2, window1, window2):
-    S1 = pd.DataFrame(S1)
-    S2 = pd.DataFrame(S2)
     
     # If window length is 0, algorithm doesn't make sense, so exit
     if (window1 == 0) or (window2 == 0):
         return 0
 
     # Compute rolling mean and rolling standard deviation
-    ratios = S1/S2
-    ma1 = ratios[-window1:].mean()
-    ma2 = ratios[-window2:].mean()
-    std = ratios[-window1:].std()
+    ratios = np.divide(np.asarray(S1),np.asarray(S2))
+    
+    ma1 = np.mean(ratios[-window1:])
+    ma2 = np.mean(ratios[-window2:])
+    std = np.std(ratios[-window1:])
+    
     zscore = (ma1 - ma2)/std
 
-    return [zscore[0], float(ratios.iloc[-1])]
+    return [zscore, ratios[-1]]
 
 class Trader:
     def __init__(self):
@@ -183,7 +183,6 @@ class Trader:
                 
 
                 couple = get_zscore(self.pina_coladas_data, self.coconuts_data, window1, window2)
-                print(couple)
                 zscore = couple[0]
                 ratio = couple[1]
                 coconuts_position = state.position.get('COCONUTS', 0)
@@ -277,6 +276,8 @@ class Trader:
                             pina_coladas_position -= best_bid_volume
                             pina_colada_bids.pop(best_bid)
 
+##################################################################################
+
             if product == "DIVING_GEAR":
                 window1 = 5
                 window2 = 20
@@ -290,7 +291,6 @@ class Trader:
                 
 
                 couple = get_zscore(self.gear_data, self.dolphin_data, window1, window2)
-                print(couple)
                 zscore = -couple[0]
                 ratio = couple[1]
                 diving_gear_position = state.position.get('DIVING_GEAR', 0)
@@ -355,6 +355,6 @@ class Trader:
         # Return the dict of orders
         # These possibly contain buy or sell orders for PEARLS
         # Depending on the logic above
-        logger.flush(state, orders_diving_gear + orders_coconuts + orders_pina_coladas + orders_berries)
+        logger.flush(state, orders_diving_gear + orders_coconuts + orders_pina_coladas + orders_berries + orders_pearls)
 
         return result
