@@ -44,10 +44,10 @@ class Trader:
     asset_returns = np.array([])
 
     def __init__(self):
-        self.basket_prev: float = None
-        self.baguette_prev: float = None
-        self.dip_prev: float = None
-        self.ukulele_prev: float = None
+        self.basket_prev = None
+        self.baguette_prev = None
+        self.dip_prev = None
+        self.ukulele_prev = None
 
     def run(self, state: TradingState) -> dict[Symbol, List[Order]]:
         result = {}
@@ -66,8 +66,8 @@ class Trader:
                 ukulele_pos = state.position.get("UKULELE", 0)
 
 
-                basket_buy_orders: List[Order] = state.order_depths[product].buy_orders
-                basket_sell_orders: List[Order] = state.order_depths[product].sell_orders
+                basket_buy_orders: Dict[int, int] = state.order_depths[product].buy_orders
+                basket_sell_orders: Dict[int, int] = state.order_depths[product].sell_orders
 
                 basket_best_bid: float = max(basket_buy_orders)
                 basket_best_ask: float = min(basket_sell_orders)
@@ -75,24 +75,24 @@ class Trader:
                 # Finding price / NAV ratio
                 basket_price: float = (basket_best_bid + basket_best_ask) / 2
 
-                baguette_buy_orders: List[Order] = state.order_depths['BAGUETTE'].buy_orders
-                baguette_sell_orders: List[Order] = state.order_depths['BAGUETTE'].sell_orders
+                baguette_buy_orders: Dict[int, int] = state.order_depths['BAGUETTE'].buy_orders
+                baguette_sell_orders: Dict[int, int] = state.order_depths['BAGUETTE'].sell_orders
 
                 baguette_best_bid: float = max(baguette_buy_orders)
                 baguette_best_ask: float = min(baguette_sell_orders)
 
                 baguette_price: float = (baguette_best_bid + baguette_best_ask) / 2
  
-                dip_buy_orders: List[Order] = state.order_depths['DIP'].buy_orders
-                dip_sell_orders: List[Order] = state.order_depths['DIP'].sell_orders
+                dip_buy_orders: Dict[int, int] = state.order_depths['DIP'].buy_orders
+                dip_sell_orders: Dict[int, int] = state.order_depths['DIP'].sell_orders
 
                 dip_best_bid: float = max(dip_buy_orders)
                 dip_best_ask: float = min(dip_sell_orders)
 
                 dip_price: float = (dip_best_bid + dip_best_ask) / 2
 
-                ukulele_buy_orders: List[Order] = state.order_depths['UKULELE'].buy_orders
-                ukulele_sell_orders: List[Order] = state.order_depths['UKULELE'].sell_orders
+                ukulele_buy_orders: Dict[int, int] = state.order_depths['UKULELE'].buy_orders
+                ukulele_sell_orders: Dict[int, int] = state.order_depths['UKULELE'].sell_orders
 
                 ukulele_best_bid: float = max(ukulele_buy_orders)
                 ukulele_best_ask: float = min(ukulele_sell_orders)
