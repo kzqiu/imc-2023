@@ -40,6 +40,8 @@ class Trader:
     basket_pnav_ratio = 1.0051
     basket_eps = 0.002
     basket_eps_open = basket_eps * 2
+    etf_returns = np.array([])
+    asset_returns = np.array([])
 
     def __init__(self):
         self.basket_prev: float = None
@@ -100,9 +102,33 @@ class Trader:
                 est_price: float = 4 * dip_price + 2 * baguette_price + ukulele_price
 
                 price_nav_ratio: float = basket_price / est_price
-                print("HEYY", price_nav_ratio, self.basket_pnav_ratio)
+                print("HEY", price_nav_ratio, self.basket_pnav_ratio)
 
-                if price_nav_ratio < self.basket_pnav_ratio - self.basket_eps:
+                
+                
+                self.etf_returns = np.append(self.etf_returns, basket_price)
+                self.asset_returns = np.append(self.asset_returns, est_price)
+
+                rolling_mean_etf = np.mean(self.etf_returns[-10:])
+                rolling_std_etf = np.std(self.etf_returns[-10:])
+
+                rolling_mean_asset = np.mean(self.asset_returns[-10:])
+                rolling_std_asset = np.std(self.asset_returns[-10:])
+
+                z_score_etf = (self.etf_returns[-1] - rolling_mean_etf) / rolling_std_etf
+                z_score_asset = (self.asset_returns[-1] - rolling_mean_asset) / rolling_std_asset
+
+                z_score_diff = z_score_etf - z_score_asset
+
+                #if z_score_diff > 2:
+                    # Buy the underlying asset and short sell the ETF
+                #elif z_score_diff < -2:
+                    # Sell the underlying asset and buy the ETF
+               
+            
+                
+                #if price_nav_ratio < self.basket_pnav_ratio - self.basket_eps:
+                if z_score_diff < -2:
                     # ETF is undervalued! -> we buy ETF and sell individual assets!
                     # Finds volume to buy that is within position limit
                     basket_best_ask_vol = max(basket_pos-self.basket_limit, state.order_depths['PICNIC_BASKET'].sell_orders[basket_best_ask])
@@ -122,7 +148,8 @@ class Trader:
                     orders_ukulele.append(Order("UKULELE", ukulele_best_bid, -ukulele_best_bid_vol))
                     
                     
-                elif price_nav_ratio > self.basket_pnav_ratio + self.basket_eps:
+                #elif price_nav_ratio > self.basket_pnav_ratio + self.basket_eps:
+                elif z_score_diff > 2:
                     # ETF is overvalued! -> we sell ETF and buy individual assets!
                     # Finds volume to buy that is within position limit
                     basket_best_bid_vol = min(self.basket_limit-basket_pos, state.order_depths['PICNIC_BASKET'].buy_orders[basket_best_bid])
