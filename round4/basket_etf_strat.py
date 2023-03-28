@@ -131,19 +131,23 @@ class Trader:
                 if z_score_diff < -2:
                     # ETF is undervalued! -> we buy ETF and sell individual assets!
                     # Finds volume to buy that is within position limit
-                    basket_best_ask_vol = max(basket_pos-self.basket_limit, state.order_depths['PICNIC_BASKET'].sell_orders[basket_best_ask])
+                    #basket_best_ask_vol = max(basket_pos-self.basket_limit, state.order_depths['PICNIC_BASKET'].sell_orders[basket_best_ask])
+                    basket_best_ask_vol = state.order_depths['PICNIC_BASKET'].sell_orders[basket_best_ask]
                     print("BUY", 'PICNIC_BASKET', -basket_best_ask_vol, "x", basket_best_ask)
                     orders_picnic_basket.append(Order('PICNIC_BASKET', basket_best_ask, -basket_best_ask_vol))
                     
-                    baguette_best_bid_vol = min(self.baguette_limit-baguette_pos, state.order_depths['BAGUETTE'].sell_orders[baguette_best_ask])
+                    #baguette_best_bid_vol = min(self.baguette_limit-baguette_pos, state.order_depths['BAGUETTE'].buy_orders[baguette_best_bid])
+                    baguette_best_bid_vol =  state.order_depths['BAGUETTE'].buy_orders[baguette_best_bid]
                     print("SELL", "BAGUETTE", baguette_best_bid_vol, "x", baguette_best_bid)
                     orders_baguette.append(Order("BAGUETTE", baguette_best_bid, -baguette_best_bid_vol))
                     
-                    dip_best_bid_vol = min(self.dip_limit-dip_pos, state.order_depths['DIP'].sell_orders[dip_best_ask])
+                    #dip_best_bid_vol = min(self.dip_limit-dip_pos, state.order_depths['DIP'].buy_orders[dip_best_bid])
+                    dip_best_bid_vol = state.order_depths['DIP'].buy_orders[dip_best_bid]
                     print("SELL", "DIP", dip_best_bid_vol, "x", dip_best_bid)
                     orders_dip.append(Order("DIP", dip_best_bid, -dip_best_bid_vol))
                     
-                    ukulele_best_bid_vol = min(self.ukulele_limit-ukulele_pos, state.order_depths['UKULELE'].sell_orders[ukulele_best_ask])
+                    #ukulele_best_bid_vol = min(self.ukulele_limit-ukulele_pos, state.order_depths['UKULELE'].buy_orders[ukulele_best_bid])
+                    ukulele_best_bid_vol = state.order_depths['UKULELE'].buy_orders[ukulele_best_bid]
                     print("SELL", "UKULELE", ukulele_best_bid_vol, "x", ukulele_best_bid)
                     orders_ukulele.append(Order("UKULELE", ukulele_best_bid, -ukulele_best_bid_vol))
                     
@@ -152,19 +156,23 @@ class Trader:
                 elif z_score_diff > 2:
                     # ETF is overvalued! -> we sell ETF and buy individual assets!
                     # Finds volume to buy that is within position limit
-                    basket_best_bid_vol = min(self.basket_limit-basket_pos, state.order_depths['PICNIC_BASKET'].buy_orders[basket_best_bid])
+                    #basket_best_bid_vol = min(self.basket_limit-basket_pos, state.order_depths['PICNIC_BASKET'].buy_orders[basket_best_bid])
+                    basket_best_bid_vol = state.order_depths['PICNIC_BASKET'].buy_orders[basket_best_bid]
                     print("SELL", 'PICNIC_BASKET', basket_best_bid_vol, "x", basket_best_bid)
                     orders_picnic_basket.append(Order('PICNIC_BASKET', basket_best_bid, -basket_best_bid_vol))
                     
-                    baguette_best_ask_vol = max(baguette_pos-self.baguette_limit, state.order_depths['BAGUETTE'].sell_orders[baguette_best_ask])
+                    #baguette_best_ask_vol = max(baguette_pos-self.baguette_limit, state.order_depths['BAGUETTE'].sell_orders[baguette_best_ask])
+                    baguette_best_ask_vol = state.order_depths['BAGUETTE'].sell_orders[baguette_best_ask]
                     print("BUY", "BAGUETTE", -baguette_best_ask_vol, "x", baguette_best_ask)
                     orders_baguette.append(Order("BAGUETTE", baguette_best_ask, -baguette_best_ask_vol))
                     
-                    dip_best_ask_vol = max(dip_pos-self.dip_limit, state.order_depths['DIP'].sell_orders[dip_best_ask])
+                    #dip_best_ask_vol = max(dip_pos-self.dip_limit, state.order_depths['DIP'].sell_orders[dip_best_ask])
+                    dip_best_ask_vol = state.order_depths['DIP'].sell_orders[dip_best_ask]
                     print("BUY", "DIP", -dip_best_ask_vol, "x", dip_best_ask)
                     orders_dip.append(Order("DIP", dip_best_ask, -dip_best_ask_vol))
                     
-                    ukulele_best_ask_vol = max(ukulele_pos-self.ukulele_limit, state.order_depths['UKULELE'].sell_orders[ukulele_best_ask])
+                    #ukulele_best_ask_vol = max(ukulele_pos-self.ukulele_limit, state.order_depths['UKULELE'].sell_orders[ukulele_best_ask])
+                    ukulele_best_ask_vol = state.order_depths['UKULELE'].sell_orders[ukulele_best_ask]
                     print("BUY", "UKULELE", -ukulele_best_ask_vol, "x", ukulele_best_ask)
                     orders_ukulele.append(Order("UKULELE", ukulele_best_ask, -ukulele_best_ask_vol))
 
