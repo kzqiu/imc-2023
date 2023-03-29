@@ -33,14 +33,6 @@ logger = Logger()
 ##################################################################################
 
 class Trader:
-    baguette_limit = 150
-    dip_limit = 300
-    ukulele_limit = 70
-    basket_limit = 70
-    basket_pnav_ratio = 1.0051
-    basket_eps = 0.002
-    basket_eps_open = basket_eps * 2
-
     def __init__(self):
         self.basket_prev = None
         self.baguette_prev = None
@@ -103,7 +95,6 @@ class Trader:
                 est_price: float = 4 * dip_price + 2 * baguette_price + ukulele_price
 
                 price_nav_ratio: float = basket_price / est_price
-                print("HEY", price_nav_ratio, self.basket_pnav_ratio)
 
 ##################################################################################
 
