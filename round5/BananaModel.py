@@ -36,13 +36,19 @@ Executes the trades
 class Trader:
     
     def __init__(self):
-        self.last_trade = None
-
+        self.berries_buy_signal = False
+        self.berries_sell_signal = False
+        self.ukulele_buy_signal = False
+        self.ukulele_sell_signal = False
         
     def run(self, state: TradingState) -> dict[Symbol, List[Order]]:
         result = {}
         orders_pearls: list[Order] = []
         orders_bananas: list[Order] = []
+        orders_coconuts: list[Order] = []
+        orders_pina_coladas: list[Order] = []
+        orders_diving_gear: list[Order] = []
+        orders_berries: list[Order] = []
         orders_baguette: list[Order] = []
         orders_dip: list[Order] = []
         orders_ukulele: list[Order] = []
@@ -122,6 +128,7 @@ class Trader:
                         
                 result[product] = orders_pearls
                 
+#######################################################################
                 
             if product == 'BANANAS':
                 position_limit = 20
@@ -144,28 +151,67 @@ class Trader:
                 
                 result[product] = orders_bananas                
             
+#######################################################################
             
+            if product == 'BERRIES':
+                position_limit = 250
+                current_position = state.position.get(product, 0)
+                time = state.timestamp % 1000000
+                
+                """
+                Strategy:
+                - Buy at start of day + delta (est. 10000)
+                - Hold until midday (approx. state.timestamp % 1000000 >= 500000)
+                - Hold at midday and switch positions!
+                """
+                order_depth_berries: OrderDepth = state.order_depths[product]
+
+                if time >= 90000 and current_position != position_limit:
+                    best_ask = min(order_depth_berries.sell_orders.keys())
+                    best_ask_volume = current_position - position_limit
+                    print("BUY BERRIES", str(-best_ask_volume) + "x", best_ask+spread)
+                    orders_berries.append(Order(product, best_ask+spread, -best_ask_volume))
+                
+                if time >= 500000 and current_position != -position_limit:
+                    best_bid = max(order_depth_berries.buy_orders.keys())
+                    best_bid_volume = current_position + position_limit
+                    print("SELL BERRIES", str(best_bid_volume) + "x", best_bid-spread)
+                    orders_berries.append(Order(product, best_bid-spread, -best_bid_volume))
             
+                result[product] = orders_berries 
+                
+#######################################################################
+                      
             if product == 'UKULELE':
                 position_limit = 70
-                spread = 0
                 current_position = state.position.get(product, 0)
-                        
+                
+                #Buy when Olivia buys and sell when Olivia sells
+                for Trade in state.market_trades.get(product, []):
+                    if Trade.buyer == 'Olivia':
+                        self.ukulele_buy_signal = True
+                        self.ukulele_sell_signal = False
+                    elif Trade.seller == 'Olivia':
+                        self.ukulele_buy_signal = False
+                        self.ukulele_sell_signal = True
+                                        
                 order_depth_ukulele: OrderDepth = state.order_depths[product]
-    
-                best_ask = min(order_depth_ukulele.buy_orders.keys())
-                best_bid = max(order_depth_ukulele.sell_orders.keys())
-                best_ask_volume = current_position - position_limit
-                best_bid_volume = current_position + position_limit
-            
-                print("BUY UKULELE", str(-best_ask_volume) + "x", best_ask+spread)
-                orders_ukulele.append(Order(product, best_ask+spread, -best_ask_volume))
-                print("SELL UKULELE", str(best_bid_volume) + "x", best_bid-spread)
-                orders_ukulele.append(Order(product, best_bid-spread, -best_bid_volume))
+
+                if self.ukulele_buy_signal == True and current_position != position_limit:
+                    best_ask = min(order_depth_ukulele.sell_orders.keys())
+                    best_ask_volume = current_position - position_limit
+                    print("BUY UKULELE", str(-best_ask_volume) + "x", best_ask+spread)
+                    orders_ukulele.append(Order(product, best_ask+spread, -best_ask_volume))
+                    
+                elif self.ukulele_sell_signal == True and current_position != -position_limit:
+                    best_bid = max(order_depth_ukulele.buy_orders.keys())
+                    best_bid_volume = current_position + position_limit
+                    print("SELL UKULELE", str(best_bid_volume) + "x", best_bid-spread)
+                    orders_ukulele.append(Order(product, best_bid-spread, -best_bid_volume))
                 
                 result[product] = orders_ukulele 
             
-            
+#######################################################################
             
             if product == 'PICNIC_BASKET':
                 position_limit = 70
@@ -189,6 +235,6 @@ class Trader:
                 result[product] = orders_picnic_basket             
                 
                 
-        logger.flush(state, orders_pearls + orders_bananas + orders_baguette + orders_dip + orders_ukulele + orders_picnic_basket)
+        logger.flush(state, orders_pearls + orders_bananas + orders_coconuts + orders_pina_coladas + orders_diving_gear + orders_berries + orders_baguette + orders_dip + orders_ukulele + orders_picnic_basket)
         return result
 
