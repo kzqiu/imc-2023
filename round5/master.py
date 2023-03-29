@@ -92,8 +92,8 @@ class Trader:
         for product in state.order_depths.keys():
             
             if product == 'PEARLS':
-                spread = 2
-                open_spread = 2
+                spread = 1
+                open_spread = 3
                 position_limit = 20
                 position_spread = 20
                 current_position = state.position.get("PEARLS",0)
