@@ -42,6 +42,7 @@ class Trader:
         result = {}
         orders_pearls: list[Order] = []
         orders_bananas: list[Order] = []
+        orders_picnic_basket: list[Order] = []
         
         for product in state.order_depths.keys():
             
@@ -124,7 +125,9 @@ class Trader:
                 current_position = state.position.get(product, 0)
                         
                 order_depth_bananas: OrderDepth = state.order_depths[product]
-    
+                
+                #Find the worst bid and ask, then buys and sells at those prices
+                #If those orders exist, it's because someone is actually buying/selling them (Pablo)
                 best_ask = min(order_depth_bananas.buy_orders.keys())
                 best_ask_volume = -order_depth_bananas.buy_orders[best_ask]
                 best_bid = max(order_depth_bananas.sell_orders.keys())
@@ -142,6 +145,31 @@ class Trader:
                 
                 result[product] = orders_bananas                
                 
-        logger.flush(state, orders_pearls + orders_bananas)
+            if product == 'PICNIC_BASKET':
+                position_limit = 70
+                spread = 3
+                current_position = state.position.get(product, 0)
+                        
+                order_depth_picnic_basket: OrderDepth = state.order_depths[product]
+    
+                best_ask = min(order_depth_picnic_basket.buy_orders.keys())
+                best_ask_volume = -order_depth_picnic_basket.buy_orders[best_ask]
+                best_bid = max(order_depth_picnic_basket.sell_orders.keys())
+                best_bid_volume = -order_depth_picnic_basket.sell_orders[best_bid]
+            
+                if current_position - best_ask_volume > position_limit:
+                    best_ask_volume = current_position - position_limit
+                if current_position - best_bid_volume < -position_limit:
+                    best_bid_volume = current_position + position_limit
+            
+                print("BUY PICNIC BASKET", str(-best_ask_volume) + "x", best_ask+spread)
+                orders_picnic_basket.append(Order(product, best_ask+spread, -best_ask_volume))
+                print("SELL PICNIC BASKET", str(best_bid_volume) + "x", best_bid-spread)
+                orders_picnic_basket.append(Order(product, best_bid-spread, -best_bid_volume))
+                
+                result[product] = orders_picnic_basket                
+                
+                
+        logger.flush(state, orders_pearls + orders_bananas + orders_picnic_basket)
         return result
 
